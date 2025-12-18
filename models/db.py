@@ -35,6 +35,15 @@ def init_db():
                 METODE TEXT NOT NULL DEFAULT CASH
                 )""")
     
+    cur.execute("""CREATE TABLE IF NOT EXISTS laporanAset (
+                BULAN INTEGER NOT NULL,
+                TANGGAL INTEGER NOT NULL,
+                JAM TEXT NOT NULL,
+                ASET TEXT NOT NULL,
+                JUMLAH INTEGER NOT NULL,
+                "MASUK/KELUAR" TEXT NOT NULL
+                )""")
+    
     cur.execute("""CREATE TABLE IF NOT EXISTS "cart" (
                 "NAMA_BARANG" TEXT NOT NULL UNIQUE,
                 "QTY" INTEGER

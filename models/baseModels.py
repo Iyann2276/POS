@@ -46,7 +46,7 @@ class ItemList(Table):
                 continue
         
 
-        cursor.close()
+        conn.close()
 
     def clear(self):
         for it in self.tree.get_children():
@@ -85,7 +85,7 @@ class ItemList2(Table):
                 continue
         
 
-        cursor.close()
+        conn.close()
 
     def clear(self):
         for it in self.tree.get_children():
@@ -146,6 +146,33 @@ class CartList(Table):
         self.cart = []
         for it in self.tree.get_children():
             self.tree.delete(it)
+
+# ====================== LAPORAN ======================
+
+class Laporan(Table):
+    def __init__(self, master):
+        headers = ["BULAN", "TANGGAL", "PADA", "ASET", "JUMLAH", "KELUAR / MASUK"]
+        anchors = [CENTER, CENTER, CENTER, CENTER, CENTER, CENTER]
+        widths = [200, 200, 200, 200, 200, 200]
+        stretch = [False, False, False, False, True, False]
+
+        super().__init__(master, headers, anchors, widths, stretch)
+
+    def load_data(self):
+        conn = getConn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM laporanAset ORDER BY BULAN")
+        rows = cursor.fetchall()
+
+        for i, item in enumerate(rows):
+            try:
+                self.tree.insert("", END, values=(item[0], item[1], item[2], item[3], item[4], item[5]))
+            except Exception:
+                continue
+        
+        conn.close
+
+# ====================== WINDOW ======================
 
 def topWin(master, w = 400, h = 300):
     root = Toplevel(master, relief=RIDGE, borderwidth=10, bg='#1a3f3a')

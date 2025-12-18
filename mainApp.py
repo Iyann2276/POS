@@ -6,6 +6,7 @@ from style import setup_style
 from models.baseModels import ItemList, CartList, topWin
 from models.checkoutModels import penjualan, addAset
 from inventory import Inventory
+from laporanAset import LaporanAset
 
 init_db()
 clearSqlTable("cart")
@@ -28,6 +29,7 @@ class Application:
         menubar = Menu(self.root)
         file = Menu(menubar, tearoff=0)
         file.add_command(label="Inventory", command=lambda:Inventory() if not self.cart.cart else messagebox.showinfo(message="ITEM HARUS KOSONG"))
+        file.add_command(label="Laporan Aset", command=lambda:LaporanAset() if not self.cart.cart else messagebox.showinfo(message="ITEM HARUS KOSONG"))
         file.add_separator()
         file.add_command(label="Quit", command=quit)
         menubar.add_cascade(label="File", menu=file)
