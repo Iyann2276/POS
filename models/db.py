@@ -28,10 +28,11 @@ def init_db():
                 ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 WAKTU_PEMBELIAN TEXT NOT NULL,
                 SUBTOTAL REAL NOT NULL,
-                DISKON REAL NOT NULL,
+                DISKON REAL NOT NULL DEFAULT 0.0,
                 TOTAL REAL NOT NULL,
                 DIBAYAR REAL NOT NULL,
-                GANTI_HARGA REAL NOT NULL
+                KEMBALIAN REAL NOT NULL,
+                METODE TEXT NOT NULL DEFAULT CASH
                 )""")
     
     cur.execute("""CREATE TABLE IF NOT EXISTS "cart" (

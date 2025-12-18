@@ -1,9 +1,10 @@
 from tkinter import *
 from tkinter import messagebox
 
-from db import getConn, addQty, clearSqlTable, delQty, init_db, subtractStock
+from models.db import getConn, addQty, clearSqlTable, delQty, init_db, subtractStock
 from style import setup_style
-from models import ItemList, CartList
+from models.baseModels import ItemList, CartList, topWin
+from models.checkoutModels import penjualan, addAset
 from inventory import Inventory
 
 init_db()
@@ -26,7 +27,7 @@ class Application:
     def _build_menu(self):
         menubar = Menu(self.root)
         file = Menu(menubar, tearoff=0)
-        file.add_command(label="Inventory", command=lambda:[Inventory()] if not self.cart.cart else messagebox.showinfo(message="ITEM HARUS KOSONG"))
+        file.add_command(label="Inventory", command=lambda:Inventory() if not self.cart.cart else messagebox.showinfo(message="ITEM HARUS KOSONG"))
         file.add_separator()
         file.add_command(label="Quit", command=quit)
         menubar.add_cascade(label="File", menu=file)
@@ -72,26 +73,15 @@ class Application:
     # ---------- WINDOWS ---------- #
 
     def open_checkout(self):
-        self.win = Toplevel(self.root, relief=RIDGE, borderwidth=10, bg='#1a3f3a')
-        w = 400
-        h = 300
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width/2) - (w/2)
-        y = (screen_height/2) - (h/2)
-        self.win.geometry("%dx%d+%d+%d" % (w, h, x, y))
-        self.win.overrideredirect(True)
-        self.win.attributes("-topmost", False)
-        self.win.grab_set()
+        self.win = topWin(self.root)
         self.win.rowconfigure(0, weight=1)
         self.win.rowconfigure(1, minsize=70)
         self.win.columnconfigure(0, weight=1)
 
-        frame1 = Frame(self.win, bg="blue")
+        frame1 = Frame(self.win, bg="#1a3f3a")
         frame1.grid(sticky=EW, padx=10)
-        #frame1.rowconfigure(0, weight=1)
-        #frame1.rowconfigure(1, minsize=70)
         frame1.columnconfigure((0,1), weight=1)
+        #frame1.rowconfigure((0,1), weight=1)
 
         totalHarga = Label(frame1, font='consolas', width=10, border=5, relief=GROOVE, text="TOTAL", justify=LEFT, anchor=W)
         totalHarga.grid(column=0, row=0, sticky=NSEW)
@@ -104,6 +94,15 @@ class Application:
         self.pembayaran = Entry(frame1, font='consolas', width=10, border=5, relief=GROOVE, justify=CENTER)
         self.pembayaran.grid(column=1, row=1, sticky=NSEW)
 
+        methods = ["QRIS", "CASH"]
+
+        self.v = StringVar(value="CASH")
+
+        for i in range(len(methods)):
+            self.cash = Radiobutton(frame1, text=methods[i], variable=self.v, value=methods[i], height=3, indicatoron=0)
+            self.cash.config(font='consolas')
+            self.cash.grid(row=2, column=i, sticky=NSEW, pady=10)
+
         frame2 = Frame(self.win, bg="blue")
         frame2.grid(sticky=NSEW)
         frame2.rowconfigure(0, weight=1)
@@ -113,6 +112,8 @@ class Application:
         Button(frame2,font="consolas", text="DONE", command=lambda: [self.submitCheckout(), self.win.destroy()]).grid(column=1, row=0, sticky=NSEW)
 
     def submitCheckout(self):
+        method = self.v.get()
+        if not method: return
         total = self.total.get()
         bayar = self.pembayaran.get()
         if bayar == '': messagebox.showinfo(message="MASUKAN PEMBAYARAN")
@@ -126,23 +127,33 @@ class Application:
             items = cur.fetchall()
 
             for item in items:
-                print(item[0])
                 subtractStock(item[0], item[1])
-                self.cart.clear()
-                clearSqlTable("cart")
+
+            t, c = penjualan(method, total, bayar)
+            
+            addAset(method, t)
+            self.open_kembalian(int(c))
+            
+            self.cart.clear()
+            clearSqlTable("cart")
         else: messagebox.showinfo(message="PEMBAYARAN KURANG")
 
-    def open_add_item(self):
-        win = Toplevel(self.root, relief=RIDGE, borderwidth=10)
-        win.geometry("1200x500+160+200")
-        win.overrideredirect(True)
-        win.attributes("-topmost", False)
-        win.grab_set()
-        win.rowconfigure(0, weight=1)
-        win.rowconfigure(1, minsize=100)
+    def open_kembalian(self, change):
+        win = topWin(self.root)
+        win.rowconfigure((0,1), weight=1)
         win.columnconfigure(0, weight=1)
 
-        frame1 = Frame(win, bg="blue")
+        Label(win, text=f"KEMBALIAN : {change}", font=("consolas", 15, "bold"), borderwidth=10, relief=RIDGE, bg="#00ADB5", foreground="black").grid(sticky=NSEW)
+
+        Button(win, text="OK", command=win.destroy, font='consolas').grid(sticky=NSEW)
+
+    def open_add_item(self):
+        self.addWin = topWin(self.root,1200,500)
+        self.addWin.rowconfigure(0, weight=1)
+        self.addWin.rowconfigure(1, minsize=100)
+        self.addWin.columnconfigure(0, weight=1)
+
+        frame1 = Frame(self.addWin, bg="blue")
         frame1.grid(sticky=NSEW)
         frame1.rowconfigure(0, weight=1)
         frame1.columnconfigure(0, weight=1)
@@ -152,31 +163,19 @@ class Application:
         self.table.tree.bind("<Double-1>", lambda event: self.tambahBarang(self.table.tree))
         self.table.tree.bind("<Double-3>", lambda event: self.open_quantity())
 
-        frame2 = Frame(win, bg="blue")
+        frame2 = Frame(self.addWin, bg="blue")
         frame2.grid(sticky=NSEW)
 
-        Button(frame2, text="DONE", command=win.destroy).grid(column=0, row=0, sticky=NSEW)
+        Button(frame2, text="DONE", command=self.addWin.destroy).grid(column=0, row=0, sticky=NSEW)
 
     def open_quantity(self):
-        self.win = Toplevel(self.root, relief=RIDGE, borderwidth=10, bg='#1a3f3a')
-        w = 400
-        h = 300
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width/2) - (w/2)
-        y = (screen_height/2) - (h/2)
-        self.win.geometry("%dx%d+%d+%d" % (w, h, x, y))
-        self.win.overrideredirect(True)
-        self.win.attributes("-topmost", False)
-        self.win.grab_set()
+        self.win = topWin(self.addWin)
         self.win.rowconfigure(0, weight=1)
         self.win.rowconfigure(1, minsize=70)
         self.win.columnconfigure(0, weight=1)
 
         frame1 = Frame(self.win, bg="blue")
         frame1.grid(sticky=EW, padx=10)
-        #frame1.rowconfigure(0, weight=1)
-        #frame1.rowconfigure(1, minsize=70)
         frame1.columnconfigure((0,1,3,4), min=50)
         frame1.columnconfigure(2, weight=1)
 

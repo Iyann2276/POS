@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import ttk
-from db import getConn, clearSqlTable
+from models.db import getConn, clearSqlTable
 
 # ====================== BASE TREEVIEW CLASS ======================
 
@@ -146,3 +146,15 @@ class CartList(Table):
         self.cart = []
         for it in self.tree.get_children():
             self.tree.delete(it)
+
+def topWin(master, w = 400, h = 300):
+    root = Toplevel(master, relief=RIDGE, borderwidth=10, bg='#1a3f3a')
+    screen_width = master.winfo_screenwidth()
+    screen_height = master.winfo_screenheight()
+    x = (screen_width/2) - (w/2)
+    y = (screen_height/2) - (h/2)
+    root.geometry("%dx%d+%d+%d" % (w, h, x, y))
+    root.overrideredirect(True)
+    root.attributes("-topmost", False)
+    root.grab_set()
+    return root

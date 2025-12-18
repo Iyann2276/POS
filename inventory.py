@@ -1,9 +1,9 @@
 from tkinter import *
 from tkinter import messagebox
 
-from db import addBarang, editBarang, hapusBarang,init_db
+from models.db import addBarang, editBarang, hapusBarang,init_db
 from style import setup_style
-from models import ItemList2
+from models.baseModels import ItemList2
 
 init_db()
 
