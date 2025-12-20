@@ -17,7 +17,7 @@ def penjualan(method, subtotal, payment, discount = 0.0):
     conn.commit()
     conn.close()
 
-    data = (datetime.now().strftime("%m"), datetime.now().strftime("%d"), datetime.now().strftime("%H:%M:%S"), method, total, "MASUK")
+    data = (datetime.now().strftime("%m"), datetime.now().strftime("%d"), datetime.now().strftime("%H:%M:%S"), method, total, "MASUK", "PEMBELIAN")
 
     addLaporanAset(data)
     return total, change

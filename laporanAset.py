@@ -27,6 +27,12 @@ class LaporanAset():
         laporan = Laporan(body)
         laporan.load_data()
 
+    # ---------- Footer ---------- #    
+        footer = Frame(main, bg="#1a3f3a", borderwidth=5, relief=RAISED)
+        footer.grid(row=1, column=0, sticky=NSEW)
+
+        Button(footer, text="CLOSE", command=lambda:self.root.destroy()).grid()
+
 if __name__ == "__main__":
     app = LaporanAset()
     app.root.mainloop()

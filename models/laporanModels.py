@@ -5,8 +5,8 @@ def addLaporanAset(data):
     cur = conn.cursor()
 
     cur.execute("""INSERT INTO laporanAset (
-                BULAN, TANGGAL, JAM, ASET, JUMLAH, "MASUK/KELUAR"
-                ) VALUES (?, ?, ?, ?, ?, ?)""", data)
+                BULAN, TANGGAL, JAM, ASET, JUMLAH, "MASUK/KELUAR", CATATAN
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)""", data)
     
     conn.commit()
     conn.close()

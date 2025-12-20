@@ -41,7 +41,8 @@ def init_db():
                 JAM TEXT NOT NULL,
                 ASET TEXT NOT NULL,
                 JUMLAH INTEGER NOT NULL,
-                "MASUK/KELUAR" TEXT NOT NULL
+                "MASUK/KELUAR" TEXT NOT NULL,
+                CATATAN TEXT
                 )""")
     
     cur.execute("""CREATE TABLE IF NOT EXISTS "cart" (
@@ -123,5 +124,47 @@ def clearSqlTable(nama):
     cur.execute(f"DELETE FROM {nama}")
     conn.commit()
     conn.close()
+
+def getColumn(column:str)-> list:
+    conn = getConn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT {column} FROM inventory")
+    datas = set(cur.fetchall())
+    data = []
+    for i in datas:
+        data.append(i[0])
+    d = sorted(data)
+    return d
+
+def getCode(prefix:str)-> str:
+    if len(prefix) <= 4:
+        prefix = f"{prefix[0]}{prefix[2]}"
+    else:
+        prefix = f"{prefix[0]}{prefix[2]}{prefix[4]}"
+
+    prefix = prefix.upper()
+    conn = getConn()
+    cur = conn.cursor()
+
+    cur.execute(f"""
+        SELECT KODE_PRODUK FROM inventory
+        WHERE KODE_PRODUK LIKE '{prefix.upper()}%'
+        ORDER BY KODE_PRODUK DESC
+        LIMIT 1
+    """)
+
+    result = cur.fetchone()
+    
+    if result is None:
+        return f"{prefix}001"
+    
+    lastCode = result[0]
+    num = int(lastCode.replace(prefix.upper(), ""))
+    num += 1
+
+    finalCode = f"{prefix.upper()}{num:03d}"
+    return finalCode
+
 
 if __name__ == "__main__": init_db()

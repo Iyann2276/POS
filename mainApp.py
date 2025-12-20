@@ -128,14 +128,14 @@ class Application:
             cur.execute("SELECT * FROM cart")
             items = cur.fetchall()
 
-            for item in items:
-                subtractStock(item[0], item[1])
-
             t, c = penjualan(method, total, bayar)
             
             addAset(method, t)
             self.open_kembalian(int(c))
             
+            for item in items:
+                subtractStock(item[0], item[1])
+                
             self.cart.clear()
             clearSqlTable("cart")
         else: messagebox.showinfo(message="PEMBAYARAN KURANG")

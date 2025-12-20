@@ -151,10 +151,10 @@ class CartList(Table):
 
 class Laporan(Table):
     def __init__(self, master):
-        headers = ["BULAN", "TANGGAL", "PADA", "ASET", "JUMLAH", "KELUAR / MASUK"]
-        anchors = [CENTER, CENTER, CENTER, CENTER, CENTER, CENTER]
-        widths = [200, 200, 200, 200, 200, 200]
-        stretch = [False, False, False, False, True, False]
+        headers = ["BULAN", "TANGGAL", "PADA", "ASET", "JUMLAH", "KELUAR / MASUK", "CATATAN"]
+        anchors = [CENTER, CENTER, CENTER, CENTER, CENTER, CENTER, CENTER]
+        widths = [200, 200, 200, 200, 200, 200, 200]
+        stretch = [False, False, False, False, False, False, True]
 
         super().__init__(master, headers, anchors, widths, stretch)
 
@@ -166,7 +166,7 @@ class Laporan(Table):
 
         for i, item in enumerate(rows):
             try:
-                self.tree.insert("", END, values=(item[0], item[1], item[2], item[3], item[4], item[5]))
+                self.tree.insert("", 0, values=(item[0], item[1], item[2], item[3], item[4], item[5], item[6]))
             except Exception:
                 continue
         
