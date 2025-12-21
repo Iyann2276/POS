@@ -163,10 +163,15 @@ class Laporan(Table):
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM laporanAset ORDER BY BULAN")
         rows = cursor.fetchall()
+        self.tree.tag_configure("keluar", background="#a00000")
+        self.tree.tag_configure("masuk", background="#0000a0")
 
         for i, item in enumerate(rows):
             try:
-                self.tree.insert("", 0, values=(item[0], item[1], item[2], item[3], item[4], item[5], item[6]))
+                if item[5] == "KELUAR":
+                    self.tree.insert("", 0, values=(item[0], item[1], item[2], item[3], item[4], item[5], item[6]), tags="keluar")
+                else:
+                    self.tree.insert("", 0, values=(item[0], item[1], item[2], item[3], item[4], item[5], item[6]), tags="masuk")
             except Exception:
                 continue
         

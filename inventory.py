@@ -5,6 +5,7 @@ from tkinter.ttk import Combobox
 from models.db import addBarang, editBarang, hapusBarang,init_db, getColumn, getCode
 from style import setup_style
 from models.baseModels import ItemList2, topWin
+from models.checkoutModels import addAset
 
 init_db()
 
@@ -233,7 +234,9 @@ class Inventory:
             )
             return
 
-        addBarang(values[0], values[1], values[2], values[3], values[4], values[5], values[6])
+        aset = values[6] * values[5]
+        addBarang(values[0], values[1], values[2], values[3], values[4], values[5], values[6], aset)
+        addAset("BARANG", aset)
         self.win.destroy()
         self.inv.refresh()
 
