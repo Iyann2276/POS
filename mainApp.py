@@ -1,11 +1,12 @@
 from tkinter import *
 from tkinter import messagebox
 
-from models.db import getConn, addQty, clearSqlTable, delQty, init_db, subtractStock
+from models.db import getConn, addQty, clearSqlTable, delQty, init_db, subtractStock, getHargaBeli
 from style import setup_style
 from models.baseModels import ItemList, CartList, topWin
-from models.checkoutModels import penjualan, addAset
+from models.checkoutModels import penjualan, addAset, subtractAset
 from inventory import Inventory
+from laporanAset import LaporanAset
 
 init_db()
 clearSqlTable("cart")
@@ -28,6 +29,7 @@ class Application:
         menubar = Menu(self.root)
         file = Menu(menubar, tearoff=0)
         file.add_command(label="Inventory", command=lambda:Inventory() if not self.cart.cart else messagebox.showinfo(message="ITEM HARUS KOSONG"))
+        file.add_command(label="Laporan Aset", command=lambda:LaporanAset() if not self.cart.cart else messagebox.showinfo(message="ITEM HARUS KOSONG"))
         file.add_separator()
         file.add_command(label="Quit", command=quit)
         menubar.add_cascade(label="File", menu=file)
@@ -120,22 +122,29 @@ class Application:
         total = int(self.total.get())
         bayar = int(self.pembayaran.get())
         if bayar >= total:
+            hargaBeli = []
+
             conn = getConn()
             cur = conn.cursor()
 
             cur.execute("SELECT * FROM cart")
             items = cur.fetchall()
-
+            conn.close()
+            
             for item in items:
+                hargaBeli.append(getHargaBeli(item[0], item[1]))
                 subtractStock(item[0], item[1])
 
-            t, c = penjualan(method, total, bayar)
-            
+            hargaBeli = sum(hargaBeli)
+            t, c = penjualan(method, total, bayar, hargaBeli)
             addAset(method, t)
-            self.open_kembalian(int(c))
+            subtractAset("BARANG", hargaBeli)
+                
             
-            self.cart.clear()
             clearSqlTable("cart")
+            self.cart.clear()
+            self.totalHarga.config(text=f"Rp {0:15,}")
+            self.open_kembalian(int(c))
         else: messagebox.showinfo(message="PEMBAYARAN KURANG")
 
     def open_kembalian(self, change):

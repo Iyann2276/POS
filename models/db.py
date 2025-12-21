@@ -21,7 +21,8 @@ def init_db():
                 SATUAN TEXT DEFAULT '-',
                 HARGA INTEGER NOT NULL,
                 STOK INTEGER NOT NULL DEFAULT 0,
-                HARGA_BELI INTEGER NOT NULL
+                HARGA_BELI INTEGER NOT NULL,
+                ASET INTEGER
                 )""")
     
     cur.execute("""CREATE TABLE IF NOT EXISTS penjualan (
@@ -33,6 +34,16 @@ def init_db():
                 DIBAYAR REAL NOT NULL,
                 KEMBALIAN REAL NOT NULL,
                 METODE TEXT NOT NULL DEFAULT CASH
+                )""")
+    
+    cur.execute("""CREATE TABLE IF NOT EXISTS laporanAset (
+                BULAN INTEGER NOT NULL,
+                TANGGAL INTEGER NOT NULL,
+                JAM TEXT NOT NULL,
+                ASET TEXT NOT NULL,
+                JUMLAH INTEGER NOT NULL,
+                "MASUK/KELUAR" TEXT NOT NULL,
+                CATATAN TEXT
                 )""")
     
     cur.execute("""CREATE TABLE IF NOT EXISTS "cart" (
@@ -48,11 +59,11 @@ def init_db():
     conn.commit()
     conn.close()
 
-def addBarang(kode,kategori,nama,satuan,harga,stok, hargaBeli):
+def addBarang(kode,kategori,nama,satuan,harga,stok, hargaBeli, aset):
     conn = getConn()
     cur = conn.cursor()
 
-    try: cur.execute("INSERT INTO inventory (KODE_PRODUK, KATEGORI, NAMA_BARANG, SATUAN, HARGA, STOK, HARGA_BELI) VALUES (?,?,?,?,?,?,?)", (kode, kategori, nama, satuan, harga, stok, hargaBeli))
+    try: cur.execute("INSERT INTO inventory (KODE_PRODUK, KATEGORI, NAMA_BARANG, SATUAN, HARGA, STOK, HARGA_BELI, ASET) VALUES (?,?,?,?,?,?,?,?)", (kode, kategori, nama, satuan, harga, stok, hargaBeli, aset))
     except sql.IntegrityError:
         messagebox.showerror(message='PRODUK TERSEBUT SUDAH ADA DI INVENTORY!!!')
         return    
@@ -101,10 +112,11 @@ def addStock(code, qty):
     conn.commit()
     conn.close()
 
-def subtractStock(code, qty):
+def subtractStock(code:str, qty):
     conn = getConn()
     cur = conn.cursor()
     cur.execute("UPDATE inventory SET STOK = STOK - ? WHERE KODE_PRODUK = ?", (qty, code))
+    cur.execute("UPDATE inventory SET ASET = ASET - (? * HARGA_BELI) WHERE KODE_PRODUK = ?", (qty, code))
     conn.commit()
     conn.close()
 
@@ -115,4 +127,58 @@ def clearSqlTable(nama):
     conn.commit()
     conn.close()
 
-if __name__ == "__main__": init_db()
+def getColumn(column:str)-> list:
+    conn = getConn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT {column} FROM inventory")
+    datas = set(cur.fetchall())
+    data = []
+    for i in datas:
+        data.append(i[0])
+    d = sorted(data)
+    conn.close()
+    return d
+
+def getCode(prefix:str)-> str:
+    if len(prefix) <= 4:
+        prefix = f"{prefix[0]}{prefix[2]}"
+    else:
+        prefix = f"{prefix[0]}{prefix[2]}{prefix[4]}"
+
+    prefix = prefix.upper()
+    conn = getConn()
+    cur = conn.cursor()
+
+    cur.execute(f"""
+        SELECT KODE_PRODUK FROM inventory
+        WHERE KODE_PRODUK LIKE '{prefix.upper()}%'
+        ORDER BY KODE_PRODUK DESC
+        LIMIT 1
+    """)
+
+    result = cur.fetchone()
+    
+    if result is None:
+        return f"{prefix}001"
+    
+    lastCode = result[0]
+    num = int(lastCode.replace(prefix.upper(), ""))
+    num += 1
+
+    finalCode = f"{prefix.upper()}{num:03d}"
+    conn.close()
+    return finalCode
+
+def getHargaBeli(code, qty):
+    conn = getConn()
+    cur = conn.cursor()
+
+    cur.execute(f"SELECT HARGA_BELI FROM inventory WHERE KODE_PRODUK LIKE '{code}'")
+    hargaBeli = cur.fetchone()
+
+    conn.close()
+
+    return hargaBeli[0] * qty
+
+if __name__ == "__main__": print(getHargaBeli("RKK001"))

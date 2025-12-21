@@ -1,9 +1,11 @@
 from tkinter import *
 from tkinter import messagebox
+from tkinter.ttk import Combobox
 
-from models.db import addBarang, editBarang, hapusBarang,init_db
+from models.db import addBarang, editBarang, hapusBarang,init_db, getColumn, getCode
 from style import setup_style
-from models.baseModels import ItemList2
+from models.baseModels import ItemList2, topWin
+from models.checkoutModels import addAset
 
 init_db()
 
@@ -33,24 +35,43 @@ class Inventory:
         footer = Frame(main, bg="#1a3f3a", borderwidth=5, relief=RAISED)
         footer.grid(row=1, column=0, sticky=NSEW)
 
-        Button(footer, text="TAMBAH PRODUK", command=self.open_add_product).grid()
+        Button(footer, text="TAMBAH PRODUK", command=self.open_select_category).grid()
         Button(footer, text="LOAD", command=self.inv.load_data).grid()
         Button(footer, text="CLEAR", command=self.inv.clear).grid()
         Button(footer, text="CLOSE", command=lambda:self.root.destroy()).grid()
 
     # ---------- Windows ---------- #
+    def open_select_category(self):
+        win = topWin(self.root)
+        win.columnconfigure((0,2), minsize=10)
+        win.columnconfigure(1, weight=1)
+        win.rowconfigure(0, weight=1)
+        win.rowconfigure(1, minsize=60)
+
+        f1 = Frame(win, pady=20, borderwidth=5, relief=SUNKEN)
+        f1.grid(row=0, column=1)
+        f2 = Frame(win, bg="#1a3f3a", pady=20)
+        f2.grid(row=1, column=1, sticky=NSEW)
+        f2.columnconfigure((0,1), weight=1)
+        f2.rowconfigure(0, weight=1)
+
+        data = getColumn('KATEGORI')
+        kategori = StringVar()
+
+        Label(f1, text=f"KATEGORI  :", font='consolas', anchor=W, justify=LEFT).grid(row=0, column=0, sticky=EW)
+        self.combobox1 = Combobox(f1, textvariable=kategori, values=data, font='consolas', width=10)
+        self.combobox1.grid(row=0, column=1, sticky=NSEW)
+
+        self.combobox1.bind("<<ComboboxSelected>>",lambda e: f2.focus())
+
+
+        Button(f2, text="CANCEL", font='consolas', command=win.destroy).grid(column=0, row=0 ,sticky=NSEW)
+        Button(f2, text="OK", font='consolas',
+               command=lambda:[self.open_add_product(), win.destroy()]if self.combobox1.get() != ""
+               else messagebox.showinfo(message="KATEGORI HARUS DI ISI!!!")).grid(column=1, row=0 ,sticky=NSEW)        
+
     def open_add_product(self):
-        self.win = Toplevel(self.root, relief=RIDGE, borderwidth=10, bg='#1a3f3a')
-        w = 600
-        h = 400
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width/2) - (w/2)
-        y = (screen_height/2) - (h/2)
-        self.win.geometry("%dx%d+%d+%d" % (600, 400, x, y))
-        self.win.overrideredirect(True)
-        self.win.attributes("-topmost", False)
-        self.win.grab_set()
+        self.win = topWin(self.root, h=400)
         self.win.columnconfigure((0,2), minsize=10)
         self.win.columnconfigure(1, weight=1)
         self.win.rowconfigure(0, weight=1)
@@ -63,8 +84,8 @@ class Inventory:
         self.f2.columnconfigure((0,1), weight=1)
         self.f2.rowconfigure(0, weight=1)
 
-        labels = [f"KODE PRODUK     : ",
-                  f"KATEGORI PRODUK : ",
+        labels = [f"KATEGORI PRODUK : ",
+                  f"KODE PRODUK     : ",
                   f"NAMA PRODUK     : ",
                   f"SATUAN PRODUK   : ",
                   f"HARGA PRODUK    : ",
@@ -75,11 +96,14 @@ class Inventory:
             Label(self.f1, text=f"{v}", font='consolas', anchor=W, justify=LEFT).grid(row=i, column=0, sticky=EW)
 
         self.kodeProduk = Entry(self.f1, font='consolas', width=10, border=5, relief=GROOVE)
-        self.kodeProduk.grid(column=1, row=0)
+        self.kodeProduk.insert(0, getCode(self.combobox1.get()))
+        self.kodeProduk.grid(column=1, row=1)
         self.kategoriProduk = Entry(self.f1, font='consolas', width=10, border=5, relief=GROOVE)
-        self.kategoriProduk.grid(column=1, row=1)
+        self.kategoriProduk.insert(0,self.combobox1.get().upper())
+        self.kategoriProduk.grid(column=1, row=0)
         self.namaProduk = Entry(self.f1, font='consolas', width=10, border=5, relief=GROOVE)
         self.namaProduk.grid(column=1, row=2)
+        self.namaProduk.focus()
         self.satuanProduk = Entry(self.f1, font='consolas', width=10, border=5, relief=GROOVE)
         self.satuanProduk.grid(column=1, row=3)
         self.hargaProduk = Entry(self.f1, font='consolas', width=10, border=5, relief=GROOVE)
@@ -210,7 +234,9 @@ class Inventory:
             )
             return
 
-        addBarang(values[0], values[1], values[2], values[3], values[4], values[5], values[6])
+        aset = values[6] * values[5]
+        addBarang(values[0], values[1], values[2], values[3], values[4], values[5], values[6], aset)
+        addAset("BARANG", aset)
         self.win.destroy()
         self.inv.refresh()
 
