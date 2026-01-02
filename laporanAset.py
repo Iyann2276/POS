@@ -1,15 +1,13 @@
 from tkinter import *
 
-from models.db import init_db
-from models.baseModels import Laporan
-from models.laporanModels import getAset, getProfit
+from Modules.Base_module import Laporan
+from Modules.Database_module import getAset, getProfit
 from style import setup_style
-
-init_db()
 
 class LaporanAset():
     def __init__(self):
-        self.root = Tk()
+        if __name__ == "__main__": self.root = Tk()
+        else: self.root = Toplevel()
         self.root.attributes('-fullscreen', True)
         setup_style(self.root)
 
