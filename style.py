@@ -39,7 +39,7 @@ def setup_style(root):
 
     # Buttons
     style.configure(
-        "Modern.TButton",
+        "TButton",
         font=("consolas", 12),
         padding=10,
         background=highlight,
@@ -47,7 +47,7 @@ def setup_style(root):
         relief="flat"
     )
     style.map(
-        "Modern.TButton",
+        "TButton",
         background=[("active", "#05ced9")],
         foreground=[("disabled", "#777777")]
     )
